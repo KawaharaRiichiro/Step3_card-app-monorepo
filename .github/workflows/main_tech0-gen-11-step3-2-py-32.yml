@@ -22,36 +22,42 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10' # ローカル環境に合わせて3.10に変更
+          python-version: '3.10'
 
-      # 🛠️ Local Build Section
+      # 1. 依存関係のインストール（テスト用）
       - name: Create and Start virtual environment and Install dependencies
-        working-directory: ./backend # ★重要: backendフォルダで実行する
+        working-directory: ./backend
         run: |
           python -m venv antenv
           source antenv/bin/activate
           pip install -r requirements.txt
-
+      
+      # 2. backendフォルダの中身をZipファイルに固める
+      # これでパスの問題を回避します
+      - name: Zip artifact for deployment
+        run: |
+          cd backend
+          zip -r ../python-app.zip . -x "antenv/*" "__pycache__/*" "*.pyc"
+          
+      # 3. Zipファイルをアップロードする
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          # ★重要: backendフォルダのみをアップロード対象にする
-          path: |
-            backend/
-            !backend/antenv/
-            !backend/__pycache__/
+          path: python-app.zip  # フォルダではなくファイルを指定
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     
     steps:
+      # 4. Zipファイルをダウンロードする
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: python-app
       
+      # 5. ZipファイルをAzureにデプロイする
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
@@ -59,4 +65,4 @@ jobs:
           app-name: 'tech0-gen-11-step3-2-py-32'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DFBA9057F70647F0AC152871D17E598C }}
-          package: ./backend # ★重要: ダウンロードしたアーティファクト内のbackendフォルダをデプロイする
+          package: python-app.zip  # ここをZipファイル名に変更

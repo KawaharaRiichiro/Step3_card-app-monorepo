@@ -1,0 +1,33 @@
+# --- Python ---
+# 仮想環境 (重要: これが含まれるとアップロードサイズが巨大になります)
+venv/
+.venv/
+env/
+
+# バイトコード・キャッシュ
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 環境変数 (重要: パスワードなどが含まれるため絶対にアップロードしない)
+.env
+.env.local
+.env.*.local
+
+# データベース (ローカル用のSQLiteなどはアップロードしない)
+CRM.db
+*.sqlite3
+
+# --- Node.js / Next.js ---
+# 依存パッケージ (重要)
+node_modules/
+
+# Next.js ビルド成果物
+.next/
+out/
+build/
+
+# --- その他 OS定義ファイルなど ---
+.DS_Store
+Thumbs.db
+*.log

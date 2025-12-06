@@ -1,0 +1,14 @@
+/*
+  Tailwind CSSの3つの主要なディレクティブをインポートします。
+  これが無いと、DaisyUIの 'btn' などのスタイルは適用されません。
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  これより下のカスタム :root や body の指定は、
+  Tailwindの 'bg-yellow-50' などのクラス指定と競合するため、
+  すべて削除します。
+*/
+

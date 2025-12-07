@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy Node.js app to Azure Web App - tech0-gen-11-step3-2-node-32
 
 on:
@@ -28,21 +25,33 @@ jobs:
         run: |
           npm ci
           npm run build --if-present
+
+      # ★★★ 追加: ビルド結果のデバッグ確認 ★★★
+      - name: Debug - List .next directory
+        run: |
+          echo "Listing .next directory..."
+          ls -R frontend/my-app/.next
           
-      # スタンドアロンビルドの成果物と静的ファイルを整理してZipにする
+          echo "Checking for server.js..."
+          if [ ! -f frontend/my-app/.next/standalone/server.js ]; then
+            echo "Error: server.js was NOT generated in standalone folder!"
+            exit 1
+          fi
+
       - name: Zip artifact for deployment
         run: |
-          # 必要なファイルを一時フォルダに集める
-          mkdir -p release
+          # コピー先のディレクトリ構造を確実に作成する
+          mkdir -p release/.next
+          mkdir -p release/public
           
-          # standaloneモードの成果物をコピー (server.jsなど)
+          # standaloneの中身をコピー (server.jsなどがここに含まれる)
           cp -r frontend/my-app/.next/standalone/. release/
           
-          # staticフォルダをコピー (画像など)
+          # staticフォルダをコピー (これがエラーの原因でした)
           cp -r frontend/my-app/.next/static release/.next/static
           
-          # publicフォルダをコピー (faviconなど)
-          cp -r frontend/my-app/public release/public
+          # publicフォルダをコピー
+          cp -r frontend/my-app/public/. release/public/
           
           # Zip圧縮
           cd release
@@ -71,6 +80,8 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
+          # ★ここはご自身の環境に合わせて修正が必要な場合がありますが、
+          #  元々のファイルに書いてあった値をそのまま使うのが安全です
           app-name: 'tech0-gen-11-step3-2-node-32'
           slot-name: 'Production'
           package: frontend-app.zip

@@ -12,8 +12,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -22,34 +20,58 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: frontend/my-app/package-lock.json
 
-      - name: npm install, build, and test
+      - name: Install dependencies, build, and test
+        working-directory: ./frontend/my-app
         run: |
-          npm install
+          npm ci
           npm run build --if-present
-          npm run test --if-present
+          
+      # スタンドアロンビルドの成果物と静的ファイルを整理してZipにする
+      - name: Zip artifact for deployment
+        run: |
+          # 必要なファイルを一時フォルダに集める
+          mkdir -p release
+          
+          # standaloneモードの成果物をコピー (server.jsなど)
+          cp -r frontend/my-app/.next/standalone/. release/
+          
+          # staticフォルダをコピー (画像など)
+          cp -r frontend/my-app/.next/static release/.next/static
+          
+          # publicフォルダをコピー (faviconなど)
+          cp -r frontend/my-app/public release/public
+          
+          # Zip圧縮
+          cd release
+          zip -r ../frontend-app.zip .
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: frontend-app.zip
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'tech0-gen-11-step3-2-node-32'
           slot-name: 'Production'
-          package: .
+          package: frontend-app.zip
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_28C82D32A3FA4AE7AA38AE091EC6A36A }}

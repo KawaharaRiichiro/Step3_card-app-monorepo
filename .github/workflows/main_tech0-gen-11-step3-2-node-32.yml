@@ -26,17 +26,7 @@ jobs:
           npm ci
           npm run build --if-present
 
-      # ★★★ 追加: ビルド結果のデバッグ確認 ★★★
-      - name: Debug - List .next directory
-        run: |
-          echo "Listing .next directory..."
-          ls -R frontend/my-app/.next
-          
-          echo "Checking for server.js..."
-          if [ ! -f frontend/my-app/.next/standalone/server.js ]; then
-            echo "Error: server.js was NOT generated in standalone folder!"
-            exit 1
-          fi
+      # デバッグステップを削除し、デプロイ処理へ進みます
 
       - name: Zip artifact for deployment
         run: |
@@ -47,7 +37,7 @@ jobs:
           # standaloneの中身をコピー (server.jsなどがここに含まれる)
           cp -r frontend/my-app/.next/standalone/. release/
           
-          # staticフォルダをコピー (これがエラーの原因でした)
+          # staticフォルダをコピー
           cp -r frontend/my-app/.next/static release/.next/static
           
           # publicフォルダをコピー
